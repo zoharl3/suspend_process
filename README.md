@@ -6,9 +6,9 @@ I finished playing, and I'd like to continue later. Usually, if you minimize a g
 
 Some games don't even allow you to pause, e.g., "Lords of the Fallen."
 
-You could manually suspend the process, but the main window will stay in the taskbar and sometimes cause trouble.
+You could manually suspend the process, but the main window will stay on the taskbar and sometimes cause trouble.
 
-If there's a convenient save, you could simply exit. But running the game each time is usually a hassle.
+If there's a convenient save, you could simply exit. But running the game each time is a hassle.
 
 Instead, via a shortcut (on the desktop) to a script, a game can be paused and resumed conveniently, hiding and showing its main window.
 
