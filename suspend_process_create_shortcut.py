@@ -12,6 +12,7 @@ from PySide6.QtCore import Qt
 from PySide6 import QtGui
 import win32con, win32api, win32ui, win32gui, win32process
 import winshell
+import string
  
 # to resolve: "This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem."
 os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = r'c:\Python37\Lib\site-packages\PySide6\plugins\platforms' 
@@ -33,11 +34,14 @@ def create_shortcut( hwnd, name ):
     exe = psutil.Process( pid ).name()
     exe = Path( exe ).stem
     print( hwnd, pid, name, exe, sep='\n' )
-    
+
     if len( name ) > 20:
         name = name[:20]
         
-    link_filepath = os.path.join( winshell.desktop(), f"suspend {name}.lnk" )
+    valid_chars = "-_.() %s%s" % ( string.ascii_letters, string.digits )
+    fname = ''.join( c for c in name if c in valid_chars )
+        
+    link_filepath = os.path.join( winshell.desktop(), f"{fname} .lnk" )
     with winshell.shortcut( link_filepath ) as link:
         link.working_directory = g_dir
         link.path = g_dir + 'suspend_process.bat'
@@ -46,25 +50,46 @@ def create_shortcut( hwnd, name ):
         link.icon_location = ( g_dir + 'suspend.ico', 0 )
         
         #link.dump()
-    print( 'created desktop shortcut' )
+    print( f'created desktop shortcut: "{link_filepath}"' )
 
 class Form( qtw.QDialog ):
+    b_filter = 1
+
     def __init__( self, parent=None ):
         super( Form, self ).__init__( parent )
 
         layout = qtw.QVBoxLayout()
         
         self.lst = qtw.QListWidget( self )
+        self.lst.setStyleSheet( "QListView::item:selected{background-color: rgb(3, 106, 255);}" )
         layout.addWidget( self.lst )
-
+        self.populate_list()
+        
         btn = qtw.QPushButton( 'Create a shortcut', self )
-        btn.clicked.connect( self.on_btn_click )
+        btn.clicked.connect( self.create_shortcut )
         layout.addWidget( btn )
 
-        # populate list
+        self.check_filter = qtw.QCheckBox( 'Drive P only' )
+        layout.addWidget( self.check_filter )
+        self.check_filter.stateChanged.connect( self.on_filter_click )
+        self.check_filter.setCheckState( Qt.CheckState.Checked )
+
+        self.setLayout( layout )
+        self.setGeometry( 400, 100, 600, 600 )
+        self.setWindowTitle( 'select window' )
+        self.show()
+
+    def populate_list( self ):
+        self.lst.clear()
+        
         for hwnd in g_wins:
             pid = win32process.GetWindowThreadProcessId( hwnd )
             exe = psutil.Process( pid[-1] ).exe()
+
+            # filter drive P
+            #print( f'b_filter={self.b_filter}' )
+            if self.b_filter and not exe.startswith( 'P:' ):
+                continue
 
             name = win32gui.GetWindowText( hwnd )
             name2 = f'{name} | {exe}'
@@ -94,15 +119,12 @@ class Form( qtw.QDialog ):
             font = QtGui.QFont( 'Consolas', 12 )
             item.setFont( font )
             self.lst.addItem( item )
-        self.lst.sortItems()
             
-        self.setLayout( layout )
-        self.setGeometry( 400, 100, 600, 600 )
-        self.setWindowTitle( 'select window' )
-        self.show()
+        self.lst.sortItems()
+        self.lst.setCurrentItem( self.lst.item( 0 ) )
 
-    def on_btn_click( self ):
-        print( f'on_btn_click()' )
+    def create_shortcut( self ):
+        print( f'create_shortcut()' )
         sel = self.lst.selectedItems()
         if not sel:
             return
@@ -111,6 +133,11 @@ class Form( qtw.QDialog ):
         create_shortcut( hwnd, name )
         self.close()
 
+    def on_filter_click( self ):
+        print( f'on_filter_click()' )
+        self.b_filter = self.check_filter.checkState() == Qt.CheckState.Checked
+        self.populate_list()
+        
 def main():
     win32gui.EnumWindows( winEnumHandler, None )
     

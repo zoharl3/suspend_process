@@ -14,6 +14,7 @@ def show_window( hwnd, op ):
     win32gui.ShowWindow( hwnd, op )
     #print( 'Last err:', win32api.GetLastError() )
     if op > 0:
+        #win32gui.MoveWindow( hwnd, 100, 0, 960, 720, 1 )
         win32gui.SetForegroundWindow( hwnd )
     
 def toggle_window( bHide, pid, title ):
@@ -23,11 +24,11 @@ def toggle_window( bHide, pid, title ):
         return
     
     hwnds = get_process.get_hwnds_for_pid( pid )
-    if len(hwnds) == 0:
+    if len( hwnds ) == 0:
         return
     
     ts = []
-    for i, hwnd in enumerate(hwnds):
+    for i, hwnd in enumerate( hwnds ):
         # first only
         if 0 and i != 0:
             break
@@ -44,7 +45,7 @@ def toggle_window( bHide, pid, title ):
             
         op = 0 if bHide else 1
         
-        print( f'    Found: HWND={hwnd}, title="{title2}", sending ShowWindow({op})' )
+        print( f'    Found: HWND={hex( hwnd )}, title="{title2}", sending ShowWindow({op})' )
         
         if 0:
             win32gui.ShowWindow( hwnd, op )
